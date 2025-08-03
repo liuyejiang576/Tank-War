@@ -57,15 +57,6 @@ make release
 - ` `: Empty space within map
 - `-`: Outside map boundary
 
-### Layered Architecture
-Main:                    main.cpp
-                            |
-Manifestation:    command_parser.cpp -> ui_manager.cpp -> logger.cpp
-                            |                    |
-Logic:               game_engine.cpp <- ai_player.cpp
-                            |
-Data:                   tank.cpp <- bullet.cpp <- game_map.cpp
-
 ### Core Classes
 
 **Tank Class**
