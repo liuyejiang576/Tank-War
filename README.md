@@ -131,16 +131,3 @@ const int MAP_SHRINK_INTERVAL = 6;   // Shrink every 6 turns
 const int BULLET_DAMAGE = 2;         // 2 damage per hit
 const int BULLET_SPEED = 2;          // Bullets move 2 cells/turn
 ```
-
-## Log File Format
-The game generates detailed logs including:
-- Turn information
-- Tank movements and positions
-- Bullet creation and movement
-- Collision events
-- Damage dealt
-- Map shrinking events
-- Game results
-
-## License
-MIT License
