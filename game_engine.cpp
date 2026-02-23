@@ -58,12 +58,12 @@ bool GameEngine::setupTanks() {
             }
         } else {
             // AI sets automatically
-            x_b = 19; y_b = 19; dir_b = D_Left;
+            x_b = INITIAL_MAP_SIZE - 1; y_b = INITIAL_MAP_SIZE - 1; dir_b = D_Left;
         }
     } else {
         // AI sets automatically
         x_a = 0; y_a = 0; dir_a = D_Right;
-        x_b = 19; y_b = 19; dir_b = D_Left;
+        x_b = INITIAL_MAP_SIZE - 1; y_b = INITIAL_MAP_SIZE - 1; dir_b = D_Left;
     }
     
     tank_a = std::make_unique<Tank>(x_a, y_a, dir_a, initial_life_points, 'A');
@@ -127,7 +127,9 @@ bool GameEngine::gameLoop() {
 
     processBulletMovement();
     processCollisions();
+    processLandmines();  // Check landmine collisions
     processOutOfMapDamage();
+    updateLandmines();   // Spawn/update landmines
     updateGameState();
     displayGameState();
     
@@ -240,6 +242,30 @@ void GameEngine::processOutOfMapDamage() {
         tank_b->takeDamage(OUT_OF_MAP_DAMAGE);
         logger->logTankDamage('B', tank_b->getLifePoints(), "out of map");
     }
+}
+
+void GameEngine::processLandmines() {
+    if (!landmine_manager) return;
+    
+    int damage;
+    // Check Tank A
+    if (landmine_manager->checkTankCollision(tank_a->getX(), tank_a->getY(), 'A', damage)) {
+        tank_a->takeDamage(damage);
+        logger->logTankDamage('A', tank_a->getLifePoints(), "landmine");
+        ui_manager->printMessage("Tank A hit a landmine! Damage: " + std::to_string(damage));
+    }
+    
+    // Check Tank B
+    if (landmine_manager->checkTankCollision(tank_b->getX(), tank_b->getY(), 'B', damage)) {
+        tank_b->takeDamage(damage);
+        logger->logTankDamage('B', tank_b->getLifePoints(), "landmine");
+        ui_manager->printMessage("Tank B hit a landmine! Damage: " + std::to_string(damage));
+    }
+}
+
+void GameEngine::updateLandmines() {
+    if (!landmine_manager) return;
+    landmine_manager->update(current_turn, game_map->getCurrentSize());
 }
 
 GameResult GameEngine::checkGameEnd() {
@@ -356,6 +382,11 @@ void GameEngine::switchPlayer() {
 
 void GameEngine::initializeComponents() {
     bullets.clear();
+    try {
+        landmine_manager = std::make_unique<LandmineManager>(5, 10);
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to create landmine manager: " << e.what() << std::endl;
+    }
 }
 
 void GameEngine::cleanupBullets() {

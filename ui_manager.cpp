@@ -5,6 +5,7 @@
 #include "tank.h"
 #include "bullet.h"
 #include "game_map.h"
+#include "landmine.h"
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -209,8 +210,9 @@ char UIManager::getMapCell(const GameEngine& game, int x, int y) const {
     const Tank& tank_b = game.getTankB();
     const auto& bullets = game.getBullets();
     const GameMap& map = game.getGameMap();
+    const LandmineManager& landmine_mgr = game.getLandmineManager();
     
-    // Show tanks with direction indicators
+    // Show tanks with direction indicators (highest priority)
     if (tank_a.isAtPosition(x, y)) {
         return getDirectionChar('A', tank_a.getDirection());
     }
@@ -223,6 +225,15 @@ char UIManager::getMapCell(const GameEngine& game, int x, int y) const {
         if (bullet->isActive() && bullet->isAtPosition(x, y)) {
             return getBulletDirectionChar(bullet->getDirection());
         }
+    }
+    
+    // Show landmines
+    const Landmine* mine = landmine_mgr.getLandmineAt(x, y);
+    if (mine && mine->isActive()) {
+        if (mine->isVisible()) {
+            return '@';  // Visible landmine
+        }
+        // Hidden landmines are not shown (for surprise element)
     }
 
     if (map.isInBounds(x, y)) return ' ';

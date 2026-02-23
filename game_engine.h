@@ -12,6 +12,7 @@
 #include "logger.h"
 #include "ui_manager.h"
 #include "ai_player.h"
+#include "landmine.h"
 
 class GameEngine {
 private:
@@ -20,6 +21,7 @@ private:
     std::unique_ptr<Tank> tank_b;
     std::vector<std::unique_ptr<Bullet>> bullets;
     std::unique_ptr<GameMap> game_map;
+    std::unique_ptr<LandmineManager> landmine_manager;
     
     // manage
     std::unique_ptr<Logger> logger;
@@ -52,6 +54,8 @@ public:
     bool processTankTurn(Tank& tank, char tank_id);
     void processBulletMovement();
     void processCollisions();
+    void processLandmines();
+    void updateLandmines();
     // void processMapShrink();
     void processOutOfMapDamage();
     
@@ -75,6 +79,7 @@ public:
     const Tank& getTankB() const { return *tank_b; }
     const std::vector<std::unique_ptr<Bullet>>& getBullets() const { return bullets; }
     const GameMap& getGameMap() const { return *game_map; }
+    const LandmineManager& getLandmineManager() const { return *landmine_manager; }
     GameMode getCurrentMode() const { return current_mode; }
     int getCurrentTurn() const { return current_turn; }
     int getInitialLifePoints() const { return initial_life_points; }

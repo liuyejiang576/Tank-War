@@ -14,7 +14,8 @@ SOURCES = main.cpp \
           command_parser.cpp \
           ui_manager.cpp \
           ai_player.cpp \
-          game_engine.cpp
+          game_engine.cpp \
+          landmine.cpp
 
 HEADERS = common.h \
           tank.h \
@@ -24,7 +25,8 @@ HEADERS = common.h \
           command_parser.h \
           ui_manager.h \
           ai_player.h \
-          game_engine.h
+          game_engine.h \
+          landmine.h
 
 OBJECTS = $(SOURCES:.cpp=.o)
 
@@ -65,7 +67,8 @@ logger.o: logger.cpp logger.h
 command_parser.o: command_parser.cpp command_parser.h common.h
 ui_manager.o: ui_manager.cpp ui_manager.h game_engine.h tank.h bullet.h game_map.h common.h
 ai_player.o: ai_player.cpp ai_player.h game_engine.h tank.h bullet.h game_map.h common.h
-game_engine.o: game_engine.cpp game_engine.h tank.h bullet.h game_map.h logger.h ui_manager.h ai_player.h common.h
+game_engine.o: game_engine.cpp game_engine.h tank.h bullet.h game_map.h logger.h ui_manager.h ai_player.h common.h landmine.h
+landmine.o: landmine.cpp landmine.h common.h ai_player.h
 
 .PHONY: all clean distclean test debug release help
 
