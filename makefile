@@ -36,20 +36,19 @@ $(TARGET): $(OBJECTS)
 %.o: %.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Windows-compatible clean (use: mingw32-make clean)
+# On Windows CMD/PowerShell, run manually: del /Q *.o tankwar *.log
 clean:
-	rm -f $(OBJECTS) $(TARGET) *.log
+	-del /Q *.o 2>nul
+	-del /Q tankwar.exe 2>nul
+	-del /Q tankwar 2>nul
+	-del /Q *.log 2>nul
 
 distclean: clean
-	rm -f *~ *.bak
+	-del /Q *~ *.bak 2>nul
 
 test: $(TARGET)
-	./$(TARGET) --help
-
-install: $(TARGET)
-	cp $(TARGET) /usr/local/bin/
-
-uninstall:
-	rm -f /usr/local/bin/$(TARGET)
+	.\$(TARGET).exe --help
 
 debug: CXXFLAGS += -DDEBUG -g3
 debug: $(TARGET)
@@ -68,7 +67,7 @@ ui_manager.o: ui_manager.cpp ui_manager.h game_engine.h tank.h bullet.h game_map
 ai_player.o: ai_player.cpp ai_player.h game_engine.h tank.h bullet.h game_map.h common.h
 game_engine.o: game_engine.cpp game_engine.h tank.h bullet.h game_map.h logger.h ui_manager.h ai_player.h common.h
 
-.PHONY: all clean distclean test install uninstall debug release
+.PHONY: all clean distclean test debug release help
 
 help:
 	@echo "Available targets:"
@@ -78,6 +77,4 @@ help:
 	@echo "  test     - Run basic test"
 	@echo "  debug    - Build debug version"
 	@echo "  release  - Build optimized release version"
-	@echo "  install  - Install to system"
-	@echo "  uninstall- Remove from system"
 	@echo "  help     - Show this help message"

@@ -96,5 +96,10 @@ private:
     bool canShootEnemy(const AIState& state) const;
     bool isSafePosition(const AIState& state, const Position& pos) const;
     MapBounds predictFutureBounds(const GameEngine& game, int future_turns) const;
+    
+    // Smarter AI helper functions
+    bool isInBulletPath(const AIState& state) const;
+    Move findDodgeMove(const AIState& state) const;
+    Move findPositioningMove(const AIState& state) const;
 };
 #endif // AI_PLAYER_H

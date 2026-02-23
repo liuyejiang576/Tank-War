@@ -103,11 +103,21 @@ Move AIPlayer::makeAggressiveMove(const AIState& state) {
 }
 
 Move AIPlayer::makeBalancedMove(const AIState& state) {
+    // Priority 1: Immediate danger avoidance
     if (isInDanger(state)) {
         return findBestEscapeMove(state);
     }
 
-    // balance: safety > attack > center
+    // Priority 2: Predict and avoid incoming bullets
+    Move dodge_move = findDodgeMove(state);
+    if (dodge_move != M_Forward || isInBulletPath(state)) {
+        Position dodge_pos = getNextPosition(state.my_pos, state.my_dir, dodge_move);
+        if (!willBeOutOfMap(state.future_bounds, dodge_pos)) {
+            return dodge_move;
+        }
+    }
+
+    // Priority 3: Attack if possible
     if (canShootEnemy(state)) {
         Move attack_move = findBestAttackMove(state);
         Position attack_pos = getNextPosition(state.my_pos, state.my_dir, attack_move);
@@ -116,6 +126,14 @@ Move AIPlayer::makeBalancedMove(const AIState& state) {
         }
     }
 
+    // Priority 4: Position for better attack angle
+    Move position_move = findPositioningMove(state);
+    Position pos_pos = getNextPosition(state.my_pos, state.my_dir, position_move);
+    if (isSafePosition(state, pos_pos) && !willBeInFutureDanger(state, pos_pos)) {
+        return position_move;
+    }
+
+    // Priority 5: Move to safe position near center
     std::vector<Move> good_moves;
     for (Move move : getAllPossibleMoves()) {
         Position next_pos = getNextPosition(state.my_pos, state.my_dir, move);
@@ -428,4 +446,111 @@ bool AIPlayer::isSafePosition(const AIState& state, const Position& pos) const {
     if (willBeHitByBullet(state, pos)) return false;
     if (difficulty_level >= 2 && isNearMapEdge(state.current_bounds, pos)) return false;
     return true;
+}
+
+// New smarter AI functions
+
+bool AIPlayer::isInBulletPath(const AIState& state) const {
+    // Check if current position is in the path of any bullet
+    for (const Position& bullet : state.bullets) {
+        // Check if bullet is moving towards us (same row or column)
+        if (bullet.x == state.my_pos.x || bullet.y == state.my_pos.y) {
+            int dist = calculateDistance(bullet, state.my_pos);
+            if (dist <= BULLET_SPEED * 2) {  // Within 2 turns of bullet travel
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+Move AIPlayer::findDodgeMove(const AIState& state) const {
+    // Find the best move to dodge incoming bullets
+    std::vector<Move> moves = getAllPossibleMoves();
+    int best_score = INT_MIN;
+    Move best_move = M_Forward;
+    
+    for (Move move : moves) {
+        Position next_pos = getNextPosition(state.my_pos, state.my_dir, move);
+        
+        // Skip if move goes out of bounds
+        if (willBeOutOfMap(state.current_bounds, next_pos)) continue;
+        if (willBeOutOfMap(state.future_bounds, next_pos)) continue;
+        
+        int score = 0;
+        
+        // Check if this position avoids all bullets
+        bool avoids_bullets = true;
+        for (const Position& bullet : state.bullets) {
+            // Calculate if bullet will hit this position
+            int dx = abs(bullet.x - next_pos.x);
+            int dy = abs(bullet.y - next_pos.y);
+            
+            // If bullet is on same row/column and within range
+            if ((dx == 0 && dy <= BULLET_SPEED * 2) || 
+                (dy == 0 && dx <= BULLET_SPEED * 2)) {
+                avoids_bullets = false;
+                score -= 50;  // Penalize positions in bullet path
+            }
+        }
+        
+        if (avoids_bullets) {
+            score += 100;  // Big bonus for avoiding bullets
+        }
+        
+        // Prefer staying near center
+        score -= calculateDistance(next_pos, Position(state.center_x, state.center_y));
+        
+        // Prefer positions away from edges
+        if (isNearMapEdge(state.current_bounds, next_pos)) {
+            score -= 30;
+        }
+        
+        if (score > best_score) {
+            best_score = score;
+            best_move = move;
+        }
+    }
+    
+    return best_move;
+}
+
+Move AIPlayer::findPositioningMove(const AIState& state) const {
+    // Find a move that positions us for a better attack angle
+    int dx = state.enemy_pos.x - state.my_pos.x;
+    int dy = state.enemy_pos.y - state.my_pos.y;
+    
+    // Determine the best direction to face for attack
+    Direction best_attack_dir;
+    if (abs(dx) >= abs(dy)) {
+        // Enemy is more horizontal, try to align horizontally
+        best_attack_dir = (dx > 0) ? D_Right : D_Left;
+    } else {
+        // Enemy is more vertical, try to align vertically
+        best_attack_dir = (dy > 0) ? D_Down : D_Up;
+    }
+    
+    // If already facing the right direction, move forward to get closer
+    if (state.my_dir == best_attack_dir) {
+        Position forward_pos = getNextPosition(state.my_pos, state.my_dir, M_Forward);
+        if (!willBeOutOfMap(state.current_bounds, forward_pos) &&
+            !willBeInFutureDanger(state, forward_pos) &&
+            isSafePosition(state, forward_pos)) {
+            return M_Forward;
+        }
+    }
+    
+    // Otherwise, turn towards the best attack direction
+    if (turnLeft(state.my_dir) == best_attack_dir) {
+        return M_Left;
+    } else if (turnRight(state.my_dir) == best_attack_dir) {
+        return M_Right;
+    }
+    
+    // If we need to turn 180 degrees, just turn left (arbitrary choice)
+    if (getOppositeDirection(state.my_dir) == best_attack_dir) {
+        return M_Left;
+    }
+    
+    return M_Forward;
 }

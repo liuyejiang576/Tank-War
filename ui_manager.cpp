@@ -210,15 +210,55 @@ char UIManager::getMapCell(const GameEngine& game, int x, int y) const {
     const auto& bullets = game.getBullets();
     const GameMap& map = game.getGameMap();
     
-    if (tank_a.isAtPosition(x, y)) return 'A';
-    if (tank_b.isAtPosition(x, y)) return 'B';
+    // Show tanks with direction indicators
+    if (tank_a.isAtPosition(x, y)) {
+        return getDirectionChar('A', tank_a.getDirection());
+    }
+    if (tank_b.isAtPosition(x, y)) {
+        return getDirectionChar('B', tank_b.getDirection());
+    }
     
+    // Show bullets with direction indicators
     for (const auto& bullet : bullets) {
-        if (bullet->isActive() && bullet->isAtPosition(x, y)) return '*';
+        if (bullet->isActive() && bullet->isAtPosition(x, y)) {
+            return getBulletDirectionChar(bullet->getDirection());
+        }
     }
 
     if (map.isInBounds(x, y)) return ' ';
     else return '-';
+}
+
+char UIManager::getDirectionChar(char tank_id, Direction dir) const {
+    // Use arrows to indicate tank direction
+    // Tank A: lowercase arrows, Tank B: uppercase/symbols
+    if (tank_id == 'A') {
+        switch (dir) {
+            case D_Left:  return '<';   // A facing left
+            case D_Up:    return '^';   // A facing up
+            case D_Right: return '>';   // A facing right
+            case D_Down:  return 'v';   // A facing down
+        }
+    } else {
+        switch (dir) {
+            case D_Left:  return 'L';   // B facing left
+            case D_Up:    return 'U';   // B facing up  
+            case D_Right: return 'R';   // B facing right
+            case D_Down:  return 'D';   // B facing down
+        }
+    }
+    return tank_id;
+}
+
+char UIManager::getBulletDirectionChar(Direction dir) const {
+    // Use simple ASCII characters for bullet directions (Windows compatible)
+    switch (dir) {
+        case D_Left:  return '-';  // horizontal bullet
+        case D_Up:    return '|';  // vertical bullet  
+        case D_Right: return '-';  // horizontal bullet
+        case D_Down:  return '|';  // vertical bullet
+    }
+    return '*';
 }
 
 void UIManager::printMapRow(const GameEngine& game, int row) const {

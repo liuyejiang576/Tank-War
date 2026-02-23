@@ -53,6 +53,8 @@ private:
     void printMapBorder(int map_size) const;
     void printMapRow(const GameEngine& game, int row) const;
     char getMapCell(const GameEngine& game, int x, int y) const;
+    char getDirectionChar(char tank_id, Direction dir) const;
+    char getBulletDirectionChar(Direction dir) const;
     bool isValidInput(const std::string& input) const;
     Move parseMove(const std::string& input) const;
     Direction parseDirection(const std::string& input) const;
